@@ -49,43 +49,24 @@ void __attribute__((optimize("O2"))) send_ws_1(uint8_t gpio){
 
 void WS2812OutBuffer( uint8_t * buffer, uint16_t length, int dim)
 {
-	uint16_t i;
+	uint16_t i, j;
 
 	GPIO_OUTPUT_SET(GPIO_ID_PIN(WSGPIO), 0);
-
-
 
 	for( i = 0; i < length; i++ )
 	{
 		system_soft_wdt_feed();
-
-			int tot = i / 3;
-			//tot = tot;
-			if(REALROWS == 7) {
-				if(tot == 0 || tot == 15 || tot == 31 || tot == 47 || tot == 63 || tot == 79 || tot == 95  ) {
-					if(tot == 0) {
-						i = i + 3;
-					} else {
-						i = i + 6;
-					}
-				}
-			}
-
-			uint8_t byte = lTmlBuf[i];
-			if( byte & 0x80 ) send_ws_1(WSGPIO); else send_ws_0(WSGPIO);
-			if( byte & 0x40 ) send_ws_1(WSGPIO); else send_ws_0(WSGPIO);
-			if( byte & 0x20 ) send_ws_1(WSGPIO); else send_ws_0(WSGPIO);
-			if( byte & 0x10 ) send_ws_1(WSGPIO); else send_ws_0(WSGPIO);
-			if( byte & 0x08 ) send_ws_1(WSGPIO); else send_ws_0(WSGPIO);
-			if( byte & 0x04 ) send_ws_1(WSGPIO); else send_ws_0(WSGPIO);
-			if( byte & 0x02 ) send_ws_1(WSGPIO); else send_ws_0(WSGPIO);
-			if( byte & 0x01 ) send_ws_1(WSGPIO); else send_ws_0(WSGPIO);
-
+        uint8_t byte = buffer[i];
+        for( j = 0; j < 8; j++ ){
+            uint8_t value = (0x01 & (byte >> j));
+            if(value){
+                send_ws_1(WSGPIO);
+            } else {
+                send_ws_0(WSGPIO);
+            }
+        }
 
 	}
-	//os_printf("\r\n");
-	//reset will happen when it's low long enough.
-	//(don't call this function twice within 10us)
 }
 
 

@@ -34,13 +34,13 @@ void tickCb() {
 	ets_wdt_disable();
 	os_intr_lock();
 
-	os_printf("Tick\r\n");
 	if(toggle == 0){
-		WS2812OutBuffer(buffer1, sizeof(buffer1), 100);
+	    os_printf("White\r\n");
+		WS2812OutBuffer(buffer1, sizeof(buffer1), 1);
 		toggle = 1;
-	} 
-	if(toggle == 1){
-		WS2812OutBuffer(buffer2, sizeof(buffer2), 100);
+	} else if(toggle == 1){
+	    os_printf("Red\r\n");
+    	WS2812OutBuffer(buffer2, sizeof(buffer2), 1);
 		toggle = 0;
 	} 
 	os_intr_unlock();
