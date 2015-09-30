@@ -354,12 +354,12 @@ uart_setreceive_callback(uart_recv_line clb) {
 }
 
 void ICACHE_FLASH_ATTR
-uart_init(UartBautRate uart0_br, UartBautRate uart1_br)
+uart_init(UartBautRate uart0_br, UartBautRate uart1_br, uart_recv_line call_back)
 {
     /*this is a example to process uart data from task,please change the priority to fit your application task if exists*/
     system_os_task(uart_recvTask, uart_recvTaskPrio, uart_recvTaskQueue, uart_recvTaskQueueLen);  //demo with a task to process the uart data
     system_os_task(uart_sendTask, uart_sendTaskPrio, uart_sendTaskQueue, uart_recvTaskQueueLen);  //demo with a task to
-
+    uart_recv_line_cb = call_back;
     UartDev.baut_rate = uart0_br;
     uart_config(UART0);
     UartDev.baut_rate = uart1_br;
@@ -389,12 +389,6 @@ uart_init(UartBautRate uart0_br, UartBautRate uart1_br)
     os_timer_setfn(&buff_timer_t, uart_test_rx , NULL);   //a demo to process the data in uart rx buffer
     os_timer_arm(&buff_timer_t,10,1);
     #endif
-}
-
-void ICACHE_FLASH_ATTR
-uart_reattach()
-{
-    uart_init(BIT_RATE_115200, BIT_RATE_115200);
 }
 
 /******************************************************************************
