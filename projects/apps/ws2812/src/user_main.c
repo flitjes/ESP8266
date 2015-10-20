@@ -4,6 +4,7 @@
 #include "user_interface.h"
 #include "driver/uart.h"
 #include "ws2812.h"
+
 static ETSTimer tickTimer;
 #define LEDS 20
 char buffer1[LEDS*3] = { 0x00, 0x00, 0xFF,
@@ -73,10 +74,28 @@ void tickCb() {
 	
 }
 
+char ssidcpy[32] = { 0 };
+
+void setap(char * ssid) {
+    static struct softap_config apconf;
+    wifi_set_opmode(STATIONAP_MODE);
+    wifi_softap_get_config(&apconf);
+    os_memset(apconf.ssid, 0, 32);
+    os_strncpy((char*) apconf.ssid, ssid, 32);
+    apconf.authmode = AUTH_OPEN;
+    apconf.max_connection = 20;
+    apconf.ssid_hidden = 0;
+    apconf.ssid_len = os_strlen(ssid);
+    apconf.channel = 1;
+    
+    wifi_softap_set_config(&apconf);
+}
+
 void user_init(void) {
 	uart_init(BIT_RATE_115200, BIT_RATE_115200, ReceiveUART); // baudrate, callback, eolchar, printftouart
 	os_printf("Starting \r\n");
- 	
+    setap("LedClock");
+
 	os_timer_disarm(&tickTimer);
 	os_timer_setfn(&tickTimer, tickCb, NULL);
 	os_timer_arm(&tickTimer, 1000, 0);
