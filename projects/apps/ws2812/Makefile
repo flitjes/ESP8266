@@ -6,6 +6,6 @@ SDK_BASE := ../../modules/modules_1_3_0/
 CUSTOM_LIBS := uart_custom
 LIBS :=  compatible net80211 lwip wpa ssl main driver
 
-CFLAGS := -Werror
+CFLAGS := -Werror -DLWIP_OPEN_SRC -mlongcalls
 
 include ../../Makefile
