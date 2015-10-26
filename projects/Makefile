@@ -141,7 +141,7 @@ firmware:
 	$(Q) mkdir -p $@
 
 flash: $(FW_FILE_1) $(FW_FILE_2)
-	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x7E000 blank.bin 0x00000 firmware/0x00000.bin 0x40000 firmware/0x40000.bin
+	-$(ESPTOOL) --port $(ESPPORT) write_flash -fm dio 0x7E000 blank.bin 0x00000 firmware/0x00000.bin 0x40000 firmware/0x40000.bin
 
 clean:
 	$(Q) rm -f $(APP_AR)
