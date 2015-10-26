@@ -17,6 +17,7 @@ void ICACHE_FLASH_ATTR handle_udp_recv(void *arg, struct udp_pcb *pcb, struct pb
     int length = p->len;
     char * pusrdata = p->payload;
     os_printf("Received udp data: %s \r\n", pusrdata);
+    pbuf_free(p);
 }
 
 void init_udp() {
