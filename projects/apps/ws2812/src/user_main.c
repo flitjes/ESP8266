@@ -13,10 +13,45 @@
 #include "lwip/igmp.h"
 #include "lwip/udp.h"   
 
+#define LEDS 5
+
+char buf_cache[LEDS * 3];
+char buf_cache_count; 
+
+char buffer1[LEDS*3] = { 0x00, 0x00, 0xFF, 
+			 0x00, 0x00, 0xFF,
+			 0x00, 0x00, 0xFF,
+			 0x00, 0x00, 0xFF,
+			 0x00, 0x00, 0xFF};/*,
+			 0x00, 0x00, 0xFF,
+			 0x00, 0x00, 0xFF,
+			 0x00, 0x00, 0xFF,
+			 0xFF, 0x00, 0x00,
+			 0xFF, 0x00, 0x00,
+			 0xFF, 0x00, 0x00,
+			 0xFF, 0x00, 0x00,
+			 0xFF, 0x00, 0x00,
+			 0xFF, 0x00, 0x00,
+			 0xFF, 0x00, 0x00,
+			 0xFF, 0x00, 0x00,
+			 0xFF, 0x00, 0x00,
+			 0xFF, 0x00, 0x00,
+			 0xFF, 0x00, 0x00,
+			 0xFF, 0x00, 0x00 };*/
+
+
 void ICACHE_FLASH_ATTR handle_udp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,  ip_addr_t *addr, u16_t port) {
     int length = p->len;
-    char * pusrdata = p->payload;
-    os_printf("Received udp data: %s \r\n", pusrdata);
+    char* pusrdata = p->payload;
+    os_printf("Received udp data:\n\r");
+    os_printf("%s\r", pusrdata);
+    pusrdata += strlen("leddata,");
+    
+    for(int i = 0; i < (LEDS * 3); i++){
+        os_printf("%x", pusrdata+i);
+    }
+    os_printf("\n");
+    memcpy(buffer1, pusrdata, LEDS * 3 );
     pbuf_free(p);
 }
 
@@ -27,61 +62,19 @@ void init_udp() {
     IP4_ADDR(&ipSend, 255, 255, 255, 255);
     pUdpConnection->multicast_ip = ipSend;
     pUdpConnection->remote_ip = ipSend;
-    pUdpConnection->remote_port = 8080;
+    pUdpConnection->remote_port = 12345;
     if(pUdpConnection == NULL) {
         os_printf("\nCould not create new udp socket... \n");
     }
-    int err = udp_bind(pUdpConnection, IP_ADDR_ANY, 8080);
+    int err = udp_bind(pUdpConnection, IP_ADDR_ANY, 12345);
     udp_recv(pUdpConnection, handle_udp_recv, pUdpConnection);
 }
 
 static ETSTimer tickTimer;
-#define LEDS 20
-char buffer1[LEDS*3] = { 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00 };
 
-char buffer2[LEDS*3] = { 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0xFF, 0x00, 0x00,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF,
-			 0x00, 0x00, 0xFF };
-
-uint8_t toggle = 0;
 void ReceiveUART(char * val) {
-	os_printf("Received stuff: %s \r\n", val);
+	os_printf("Received stuff:\r\n");
+	os_printf("%s \r", val);
 }
 
 void tickCb() {
@@ -89,16 +82,10 @@ void tickCb() {
 	ets_wdt_disable();
 	os_intr_lock();
 
-	if(toggle == 0){
-	    os_printf("White\r\n");
-		WS2812OutBuffer(buffer1, sizeof(buffer1), 1);
-		toggle = 1;
-	} else if(toggle == 1){
-	    os_printf("Red\r\n");
-    	WS2812OutBuffer(buffer2, sizeof(buffer2), 1);
-		toggle = 0;
-	} 
-	os_intr_unlock();
+    os_printf("Data\r\n");
+	WS2812OutBuffer(buffer1, sizeof(buffer1), 1);
+	
+    os_intr_unlock();
 	ets_wdt_enable();
 	os_timer_arm(&tickTimer, 1000, 0);
 	
@@ -121,13 +108,17 @@ void setap(char * ssid) {
     wifi_softap_set_config(&apconf);
 }
 
-void user_init(void) {
-	uart_init(BIT_RATE_115200, BIT_RATE_115200, ReceiveUART); // baudrate, callback, eolchar, printftouart
+void ICACHE_FLASH_ATTR user_done(void) {
 	os_printf("Starting \r\n");
     setap("LedClock");
     init_udp();
 	os_timer_disarm(&tickTimer);
 	os_timer_setfn(&tickTimer, tickCb, NULL);
-	os_timer_arm(&tickTimer, 1000, 0);
+	os_timer_arm(&tickTimer, 100, 0);
+
+}
+void user_init(void) {
+	uart_init(BIT_RATE_115200, BIT_RATE_115200, ReceiveUART); // baudrate, callback, eolchar, printftouart
+    system_init_done_cb(user_done);
 }
 
